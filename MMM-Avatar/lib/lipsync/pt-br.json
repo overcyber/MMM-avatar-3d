@@ -1,0 +1,340 @@
+{
+  "info": {
+    "language": "pt-BR",
+    "description": "Mapeamento completo de fonemas para português brasileiro",
+    "version": "1.0.0",
+    "author": "Adaptado para MagicMirror Avatar",
+    "license": "MIT"
+  },
+  "phonemes": {
+    "a": { "viseme": "A", "weight": 1.0 },
+    "ã": { "viseme": "A", "weight": 0.9 },
+    "á": { "viseme": "A", "weight": 1.0 },
+    "à": { "viseme": "A", "weight": 0.9 },
+    "â": { "viseme": "A", "weight": 0.8 },
+    
+    "e": { "viseme": "E", "weight": 1.0 },
+    "é": { "viseme": "E", "weight": 1.0 },
+    "ê": { "viseme": "E", "weight": 0.9 },
+    
+    "i": { "viseme": "I", "weight": 1.0 },
+    "í": { "viseme": "I", "weight": 1.0 },
+    
+    "o": { "viseme": "O", "weight": 1.0 },
+    "ó": { "viseme": "O", "weight": 1.0 },
+    "ô": { "viseme": "O", "weight": 0.9 },
+    "õ": { "viseme": "O", "weight": 0.9 },
+    
+    "u": { "viseme": "U", "weight": 1.0 },
+    "ú": { "viseme": "U", "weight": 1.0 },
+    
+    "b": { "viseme": "B_M_P", "weight": 1.0 },
+    "m": { "viseme": "B_M_P", "weight": 1.0 },
+    "p": { "viseme": "B_M_P", "weight": 1.0 },
+    
+    "f": { "viseme": "F_V", "weight": 1.0 },
+    "v": { "viseme": "F_V", "weight": 1.0 },
+    
+    "d": { "viseme": "D_T", "weight": 1.0 },
+    "t": { "viseme": "D_T", "weight": 1.0 },
+    
+    "n": { "viseme": "N", "weight": 0.9 },
+    "nh": { "viseme": "N", "weight": 0.8 },
+    
+    "l": { "viseme": "L", "weight": 1.0 },
+    "lh": { "viseme": "L", "weight": 0.9 },
+    
+    "r": { "viseme": "R", "weight": 0.9 },
+    "rr": { "viseme": "R", "weight": 1.0 },
+    
+    "s": { "viseme": "S", "weight": 1.0 },
+    "ss": { "viseme": "S", "weight": 1.0 },
+    "ç": { "viseme": "S", "weight": 1.0 },
+    "c": { "viseme": "S", "weight": 0.9, "context": ["i", "e", "é", "ê", "í"] },
+    
+    "z": { "viseme": "Z", "weight": 1.0 },
+    "j": { "viseme": "Z", "weight": 0.9 },
+    "g": { "viseme": "Z", "weight": 0.9, "context": ["i", "e", "é", "ê", "í"] },
+    
+    "k": { "viseme": "K", "weight": 1.0 },
+    "c": { "viseme": "K", "weight": 1.0, "context": ["a", "o", "u", "á", "ã", "â", "ó", "ô", "õ", "ú"] },
+    "q": { "viseme": "K", "weight": 1.0 },
+    
+    "g": { "viseme": "G", "weight": 1.0, "context": ["a", "o", "u", "á", "ã", "â", "ó", "ô", "õ", "ú"] },
+    
+    "h": { "viseme": "sil", "weight": 0.2 },
+    "silence": { "viseme": "sil", "weight": 1.0 }
+  },
+  "digraphs": {
+    "ch": { "viseme": "SH", "weight": 1.0 },
+    "sh": { "viseme": "SH", "weight": 1.0 },
+    "nh": { "viseme": "N", "weight": 0.8 },
+    "lh": { "viseme": "L", "weight": 0.9 },
+    "rr": { "viseme": "R", "weight": 1.0 },
+    "ss": { "viseme": "S", "weight": 1.0 },
+    "sc": { "viseme": "S", "weight": 1.0 },
+    "xc": { "viseme": "S", "weight": 1.0 },
+    "qu": { "viseme": "K", "weight": 1.0, "consume": 1 },
+    "gu": { "viseme": "G", "weight": 1.0, "consume": 1, "context": ["e", "i", "é", "ê", "í"] }
+  },
+  "special_rules": [
+    { "pattern": "ão", "replace": "aw~", "viseme_sequence": ["A", "O"] },
+    { "pattern": "õe", "replace": "oy~", "viseme_sequence": ["O", "I"] },
+    { "pattern": "ai", "replace": "aj", "viseme_sequence": ["A", "I"] },
+    { "pattern": "ei", "replace": "ej", "viseme_sequence": ["E", "I"] },
+    { "pattern": "oi", "replace": "oj", "viseme_sequence": ["O", "I"] },
+    { "pattern": "ui", "replace": "uj", "viseme_sequence": ["U", "I"] },
+    { "pattern": "au", "replace": "aw", "viseme_sequence": ["A", "U"] },
+    { "pattern": "eu", "replace": "ew", "viseme_sequence": ["E", "U"] },
+    { "pattern": "ou", "replace": "ow", "viseme_sequence": ["O", "U"] }
+  ],
+  "visemes": {
+    "sil": {
+      "name": "Silence",
+      "description": "Posição neutra com a boca fechada",
+      "blendshapes": [
+        { "name": "viseme_sil", "value": 1.0 }
+      ]
+    },
+    "A": {
+      "name": "A",
+      "description": "Boca aberta em formato oval, mandíbula abaixada",
+      "blendshapes": [
+        { "name": "viseme_a", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.7 }
+      ]
+    },
+    "E": {
+      "name": "E",
+      "description": "Boca aberta com cantos esticados horizontalmente",
+      "blendshapes": [
+        { "name": "viseme_e", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.5 },
+        { "name": "mouthSmile", "value": 0.3 }
+      ]
+    },
+    "I": {
+      "name": "I",
+      "description": "Boca levemente aberta com cantos esticados horizontalmente",
+      "blendshapes": [
+        { "name": "viseme_I", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.3 },
+        { "name": "mouthSmile", "value": 0.5 }
+      ]
+    },
+    "O": {
+      "name": "O",
+      "description": "Lábios arredondados formando um círculo",
+      "blendshapes": [
+        { "name": "viseme_o", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.6 }
+      ]
+    },
+    "U": {
+      "name": "U",
+      "description": "Lábios projetados para frente em formato fechado",
+      "blendshapes": [
+        { "name": "viseme_u", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.3 }
+      ]
+    },
+    "B_M_P": {
+      "name": "B/M/P",
+      "description": "Lábios fechados, pressionados um contra o outro",
+      "blendshapes": [
+        { "name": "viseme_PP", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.0 }
+      ]
+    },
+    "F_V": {
+      "name": "F/V",
+      "description": "Dentes superiores tocando levemente o lábio inferior",
+      "blendshapes": [
+        { "name": "viseme_FF", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.2 }
+      ]
+    },
+    "D_T": {
+      "name": "D/T",
+      "description": "Ponta da língua tocando atrás dos dentes superiores",
+      "blendshapes": [
+        { "name": "viseme_DD", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.3 }
+      ]
+    },
+    "N": {
+      "name": "N",
+      "description": "Boca levemente aberta, língua tocando o céu da boca",
+      "blendshapes": [
+        { "name": "viseme_nn", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.2 }
+      ]
+    },
+    "L": {
+      "name": "L",
+      "description": "Boca levemente aberta, ponta da língua tocando atrás dos dentes",
+      "blendshapes": [
+        { "name": "viseme_TH", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.4 }
+      ]
+    },
+    "R": {
+      "name": "R",
+      "description": "Boca levemente aberta, língua retraída",
+      "blendshapes": [
+        { "name": "viseme_RR", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.4 }
+      ]
+    },
+    "S": {
+      "name": "S",
+      "description": "Dentes quase fechados, lábios levemente esticados",
+      "blendshapes": [
+        { "name": "viseme_SS", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.2 },
+        { "name": "mouthSmile", "value": 0.2 }
+      ]
+    },
+    "SH": {
+      "name": "SH",
+      "description": "Lábios projetados para frente em forma arredondada",
+      "blendshapes": [
+        { "name": "viseme_SH", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.2 }
+      ]
+    },
+    "Z": {
+      "name": "Z",
+      "description": "Semelhante ao S, mas com vibração das cordas vocais",
+      "blendshapes": [
+        { "name": "viseme_ZZ", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.2 },
+        { "name": "mouthSmile", "value": 0.2 }
+      ]
+    },
+    "K": {
+      "name": "K",
+      "description": "Parte de trás da língua tocando o céu da boca",
+      "blendshapes": [
+        { "name": "viseme_kk", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.5 }
+      ]
+    },
+    "G": {
+      "name": "G",
+      "description": "Semelhante ao K, mas com vibração das cordas vocais",
+      "blendshapes": [
+        { "name": "viseme_CH", "value": 1.0 },
+        { "name": "mouthOpen", "value": 0.5 }
+      ]
+    }
+  },
+  "timing": {
+    "visemeDuration": 0.12,        
+    "transitionDuration": 0.04,    
+    "restDuration": 0.08,          
+    "emphasis": {
+      "vowels": 1.2,               
+      "consonants": 0.9,
+      "plosives": 1.1             
+    },
+    "coarticulation": {
+      "forward": 0.5,             
+      "backward": 0.3,            
+      "strength": 0.6             
+    }
+  },
+  "blendshape_mappings": {
+    "ARKit": {
+      "viseme_sil": "jawOpen.0",
+      "viseme_a": "jawOpen.0.7+mouthOpen.0.7",
+      "viseme_e": "jawOpen.0.5+mouthSmile.0.3",
+      "viseme_I": "jawOpen.0.3+mouthSmile.0.5",
+      "viseme_o": "jawOpen.0.6+mouthFunnel.0.6",
+      "viseme_u": "jawOpen.0.3+mouthFunnel.0.7+mouthPucker.0.3",
+      "viseme_PP": "mouthClose.1.0+mouthPucker.0.3",
+      "viseme_FF": "jawOpen.0.2+lowerLipIn.0.7",
+      "viseme_DD": "jawOpen.0.3+tongueOut.0.4",
+      "viseme_nn": "jawOpen.0.2+tongueUp.0.5",
+      "viseme_TH": "jawOpen.0.4+tongueUp.0.6",
+      "viseme_RR": "jawOpen.0.4+mouthLeft.0.3",
+      "viseme_SS": "jawOpen.0.2+mouthSmile.0.2+mouthClose.0.5",
+      "viseme_SH": "jawOpen.0.2+mouthPucker.0.6",
+      "viseme_ZZ": "jawOpen.0.2+mouthSmile.0.2+mouthClose.0.4",
+      "viseme_kk": "jawOpen.0.5+tongueUp.0.2",
+      "viseme_CH": "jawOpen.0.5+tongueUp.0.2"
+    },
+    "Oculus": {
+      "viseme_sil": "sil",
+      "viseme_a": "aa",
+      "viseme_e": "e",
+      "viseme_I": "ih",
+      "viseme_o": "oh",
+      "viseme_u": "u",
+      "viseme_PP": "pp",
+      "viseme_FF": "ff",
+      "viseme_DD": "dd",
+      "viseme_nn": "nn",
+      "viseme_TH": "th",
+      "viseme_RR": "rr",
+      "viseme_SS": "ss",
+      "viseme_SH": "zh",
+      "viseme_ZZ": "zz",
+      "viseme_kk": "kk",
+      "viseme_CH": "ch"
+    },
+    "CustomBlend": {
+      "viseme_sil": "mouthClose.1.0",
+      "viseme_a": "mouthAOpen.1.0",
+      "viseme_e": "mouthEOpen.1.0",
+      "viseme_I": "mouthIOpen.1.0",
+      "viseme_o": "mouthOOpen.1.0",
+      "viseme_u": "mouthUOpen.1.0",
+      "viseme_PP": "mouthPBMClose.1.0",
+      "viseme_FF": "mouthFVClose.1.0",
+      "viseme_DD": "mouthDTClose.1.0",
+      "viseme_nn": "mouthNNClose.1.0",
+      "viseme_TH": "mouthLClose.1.0",
+      "viseme_RR": "mouthRClose.1.0",
+      "viseme_SS": "mouthSClose.1.0",
+      "viseme_SH": "mouthSHClose.1.0",
+      "viseme_ZZ": "mouthZClose.1.0",
+      "viseme_kk": "mouthKClose.1.0",
+      "viseme_CH": "mouthGClose.1.0"
+    }
+  },
+  "regionalVariations": {
+    "sul": {
+      "r": { "viseme": "R", "weight": 0.7 },
+      "rr": { "viseme": "R", "weight": 0.8 }
+    },
+    "nordeste": {
+      "e": { "viseme": "E", "weight": 1.1 },
+      "o": { "viseme": "O", "weight": 1.1 }
+    },
+    "carioca": {
+      "s": { "viseme": "SH", "weight": 0.9 },
+      "z": { "viseme": "SH", "weight": 0.9 }
+    }
+  },
+  "plosives": ["p", "t", "k", "b", "d", "g"],
+  "fricatives": ["f", "v", "s", "z", "sh", "zh", "h"],
+  "vowels": ["a", "e", "i", "o", "u", "á", "é", "í", "ó", "ú", "â", "ê", "ô", "ã", "õ"],
+  "semivowels": ["j", "w"],
+  "nasals": ["m", "n", "nh"],
+  "liquids": ["l", "lh", "r", "rr"],
+  "stress_marks": {
+    "primary": { "multiply": 1.2 },
+    "secondary": { "multiply": 1.1 },
+    "unstressed": { "multiply": 0.9 }
+  },
+  "punctuation_pauses": {
+    ",": 0.2,
+    ";": 0.3,
+    ".": 0.5,
+    "!": 0.5,
+    "?": 0.5,
+    ":": 0.3,
+    "...": 0.7
+  }
+}

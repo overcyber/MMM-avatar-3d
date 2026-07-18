@@ -1,0 +1,528 @@
+/* Magic Mirror
+ * Node Helper: MMM-AvatarMQTT
+ *
+ * By YourName
+ * MIT Licensed.
+ */
+
+const NodeHelper = require("node_helper");
+let mqtt;
+try {
+    mqtt = require("mqtt");
+} catch (e) {
+    console.error("Não foi possível carregar o módulo MQTT. Certifique-se de executar 'npm install' no diretório do módulo MMM-AvatarMQTT.");
+}
+const fs = require("fs");
+const path = require("path");
+const { exec } = require("child_process");
+const { Buffer } = require("buffer");
+const crypto = require("crypto");
+
+function extractSiteId(topic) {
+    if (!topic) return null;
+    const parts = topic.split("/");
+    if (parts.length >= 4 && parts[0] === "neoalice" && parts[1] === "v1") {
+        return parts[2];
+    }
+    return null;
+}
+
+function matchesSite(topicSiteId, desired, acceptAny) {
+    if (acceptAny) return true;
+    if (!desired) return true;
+    if (!topicSiteId) return true; // aceita broadcast
+    return topicSiteId === desired;
+}
+
+function decodeAudioB64(payload) {
+    const b64 = (payload && payload.audio && payload.audio.b64) || (payload && payload.audio_base64) || null;
+    if (!b64) return null;
+    try {
+        return Buffer.from(b64, "base64");
+    } catch (e) {
+        return null;
+    }
+}
+
+module.exports = NodeHelper.create({
+    // Inicializa o helper
+    start: function() {
+        console.log("Iniciando node_helper para o módulo: " + this.name);
+        this.started = false;
+        this.config = null;
+        this.mqttClient = null;
+        this.mqttClients = [];
+        this.connectedCount = 0;
+        this.tempDir = path.join(__dirname, "temp");
+        this.stateTimer = null;
+        this._dedupWindowMs = 1500;
+        this._msgDedup = new Map();
+        
+        // Cria diretório temporário para arquivos de áudio se não existir
+        if (!fs.existsSync(this.tempDir)) {
+            try {
+                fs.mkdirSync(this.tempDir, { recursive: true });
+                console.log(`${this.name}: Diretório temporário criado: ${this.tempDir}`);
+            } catch (err) {
+                console.error(`${this.name}: Erro ao criar diretório temporário:`, err);
+            }
+        }
+    },
+    
+    // Socket Notification Received
+    socketNotificationReceived: function(notification, payload) {
+        const self = this;
+        
+        if (notification === "CONFIG" && !this.started) {
+            this.config = payload;
+            this.started = true;
+            
+            // Verifica se MQTT está disponível
+            if (!mqtt) {
+                console.error(`${this.name}: Módulo MQTT não disponível. Execute 'npm install' no diretório do módulo.`);
+                this.sendSocketNotification("MQTT_ERROR", {
+                    error: "Módulo MQTT não está instalado. Execute 'npm install' no diretório do módulo."
+                });
+                return;
+            }
+            
+            // Inicializa conexão MQTT do lado do servidor
+            this.initMQTT();
+        } else if (notification === "SPEAK_TEXT") {
+            // Pode implementar TTS do lado do servidor se necessário
+            this.speakText(payload.text, payload.options);
+        } else if (notification === "MQTT_PUBLISH") {
+            // Publica uma mensagem MQTT se solicitado pelo front-end
+            this.publishAll(payload.topic, JSON.stringify(payload.message || {}));
+        }
+    },
+    
+    // Inicializa MQTT
+    initMQTT: function() {
+        const brokers = this.getBrokerList();
+        if (brokers.length === 0) {
+            console.error(`${this.name}: Nenhum broker MQTT configurado.`);
+            this.sendSocketNotification("MQTT_ERROR", {
+                error: "Nenhum broker MQTT configurado."
+            });
+            return;
+        }
+        brokers.forEach((broker, idx) => {
+            this.connectMQTTClient(broker, idx);
+        });
+    },
+
+    getBrokerList: function() {
+        const raw = (this.config.MQTT_BROKERS || "").trim();
+        const list = raw
+            ? raw.split(",").map(x => x.trim()).filter(Boolean)
+            : [
+                (this.config.MQTT_BROKER || "").trim(),
+                (this.config.MQTT_BROKER_WS || "").trim()
+            ].filter(Boolean);
+        // remove duplicados
+        const seen = new Set();
+        return list.filter(item => {
+            if (seen.has(item)) return false;
+            seen.add(item);
+            return true;
+        });
+    },
+
+    connectMQTTClient: function(broker, idx) {
+        const self = this;
+        const brokerTcp = broker.startsWith("ws") ? broker.replace(/^ws/, "mqtt") : broker;
+        console.log(`${this.name}: Conectando ao broker MQTT: ${brokerTcp || broker}`);
+        const clientId = `${this.config.MQTT_CLIENT_ID}_backend_${idx}`;
+        const mqttOptions = {
+            clientId: clientId,
+            clean: true,
+            reconnectPeriod: 5000,
+            connectTimeout: 10000
+        };
+        if (this.config.mqttUser && this.config.mqttPassword) {
+            mqttOptions.username = this.config.mqttUser;
+            mqttOptions.password = this.config.mqttPassword;
+        }
+        let client;
+        try {
+            client = mqtt.connect(brokerTcp || broker, mqttOptions);
+        } catch (err) {
+            console.error(`${this.name}: Erro ao conectar ao broker MQTT:`, err);
+            this.sendSocketNotification("MQTT_ERROR", {
+                error: "Falha ao conectar com o broker MQTT: " + err.message
+            });
+            return;
+        }
+        this.mqttClients.push(client);
+        if (!this.mqttClient) {
+            this.mqttClient = client;
+        }
+
+        client.on('connect', function() {
+            console.log(`${self.name}: Conectado ao broker MQTT`);
+            self.connectedCount += 1;
+            if (self.connectedCount === 1) {
+                self.sendSocketNotification("MQTT_CONNECTED", {});
+                self.startStateHeartbeat();
+            }
+            
+            const topics = [
+                'neoalice/v1/+/cmd/tts/say',
+                'neoalice/v1/+/cmd/tts/audio',
+                'neoalice/v1/+/cmd/tts/stop',
+                'neoalice/v1/+/evt/stt/final',
+                self.config.moodTopic || 'neoalice/v1/+/evt/mood',
+                'hermes/#',
+                'hermes/+/+/playBytes/#',
+                'hermes/+/+/playWav/#',
+                'hermes/intent/#',
+                'hermes/dialogueManager/#'
+            ];
+            
+            topics.forEach(topic => {
+                client.subscribe(topic, function(err) {
+                    if (!err) {
+                        console.log(`${self.name}: Inscrito em ${topic}`);
+                    } else {
+                        console.error(`${self.name}: Erro ao inscrever em ${topic}:`, err);
+                    }
+                });
+            });
+        });
+        
+        client.on('reconnect', function() {
+            console.log(`${self.name}: Tentando reconectar ao broker MQTT...`);
+        });
+        
+        client.on('offline', function() {
+            console.log(`${self.name}: MQTT desconectado. Offline.`);
+            self.connectedCount = Math.max(0, self.connectedCount - 1);
+            if (self.connectedCount === 0) {
+                self.stopStateHeartbeat();
+                self.sendSocketNotification("MQTT_DISCONNECTED", {});
+            }
+        });
+        
+        client.on('error', function(err) {
+            console.error(`${self.name}: Erro MQTT:`, err);
+            self.connectedCount = Math.max(0, self.connectedCount - 1);
+            if (self.connectedCount === 0) {
+                self.stopStateHeartbeat();
+                self.sendSocketNotification("MQTT_ERROR", {
+                    error: err.message || "Erro desconhecido"
+                });
+            }
+        });
+        
+        client.on('message', function(topic, message) {
+            const startTime = Date.now();
+            console.log(`${self.name}: Mensagem recebida no tópico: ${topic}`);
+            if (self.isDuplicateMessage(topic, message)) {
+                return;
+            }
+            
+            // Primeiro, protocolo NeoAlice v1
+            if (topic.startsWith('neoalice/')) {
+                let data = null;
+                try {
+                    data = JSON.parse(message.toString());
+                } catch (e) {
+                    console.error(`${self.name}: Payload inválido (não JSON) em ${topic}`);
+                }
+                const topicSiteId = extractSiteId(topic);
+                if (!matchesSite(topicSiteId, self.config.siteId, self.config.acceptAnySite)) {
+                    return;
+                }
+                
+                if (topic.endsWith('/cmd/tts/say') && data) {
+                    const text = (data.tts && data.tts.text) || data.text || "";
+                    if (!text) return;
+                    self.sendSocketNotification("MQTT_MESSAGE", {
+                        topic: topic,
+                        message: {
+                            text: text,
+                            siteId: data.site_id || topicSiteId,
+                            lang: data.lang || (data.tts && data.tts.lang)
+                        }
+                    });
+                    return;
+                }
+                
+                if (topic.endsWith('/cmd/tts/audio') && data) {
+                    const audioBuffer = decodeAudioB64(data);
+                    if (!audioBuffer) return;
+                    const text = (data.tts && data.tts.text) || data.text || "";
+                    self.sendSocketNotification("MQTT_AUDIO", {
+                        topic: topic,
+                        buffer: Array.from(audioBuffer),
+                        siteId: data.site_id || topicSiteId,
+                        sessionId: data.session_id,
+                        text: text
+                    });
+                    return;
+                }
+                
+                if (topic.endsWith('/cmd/tts/stop')) {
+                    self.sendSocketNotification("MQTT_STOP", {
+                        topic: topic,
+                        siteId: data && (data.site_id || topicSiteId)
+                    });
+                    return;
+                }
+                
+                if (topic.endsWith('/evt/stt/final') && data) {
+                    self.sendSocketNotification("MQTT_MESSAGE", {
+                        topic: topic,
+                        message: data
+                    });
+                    return;
+                }
+                
+                if (topic.includes('/evt/mood') && data) {
+                    const mood = data.mood || (data.state && data.state.mood);
+                    if (mood) {
+                        self.sendSocketNotification("MQTT_MOOD", { mood: mood, topic: topic });
+                    }
+                    return;
+                }
+            }
+            
+            // Processa mensagens de texto (TTS)
+            if (topic === 'hermes/tts/say') {
+                try {
+                    const data = JSON.parse(message.toString());
+                    console.log(`${self.name}: Texto para falar: "${data.text}"`);
+                    
+                    self.sendSocketNotification("MQTT_MESSAGE", {
+                        topic: topic,
+                        message: data
+                    });
+                } catch(e) {
+                    console.error(`${self.name}: Erro ao processar mensagem TTS:`, e);
+                }
+            }
+            
+            // Processa áudio (playBytes ou playWav)
+            else if (topic.includes('/playBytes/') || topic.includes('/playWav/')) {
+                console.log(`${self.name}: Recebido áudio no tópico ${topic}`);
+                
+                // Salva o áudio em um arquivo temporário
+                const audioFilename = path.join(self.tempDir, `audio_${Date.now()}.wav`);
+                try {
+                    fs.writeFileSync(audioFilename, message);
+                    console.log(`${self.name}: Áudio salvo em ${audioFilename}`);
+                    
+                    // Envia o caminho do arquivo para o frontend
+                    self.sendSocketNotification("AUDIO_FILE", {
+                        topic: topic,
+                        filename: audioFilename
+                    });
+                    
+                    // Auto-limpeza após um tempo
+                    setTimeout(() => {
+                        try {
+                            if (fs.existsSync(audioFilename)) {
+                                fs.unlinkSync(audioFilename);
+                                console.log(`${self.name}: Arquivo temporário removido: ${audioFilename}`);
+                            }
+                        } catch (e) {
+                            console.error(`${self.name}: Erro ao remover arquivo temporário:`, e);
+                        }
+                    }, 300000); // 5 minutos
+                    
+                } catch(e) {
+                    console.error(`${self.name}: Erro ao salvar arquivo de áudio:`, e);
+                }
+                
+                // Alternativamente, pode enviar o buffer diretamente, mas pode ser problemático para arquivos grandes
+                self.sendSocketNotification("MQTT_AUDIO", {
+                    topic: topic,
+                    buffer: Array.from(message) // Converte Buffer para Array para transmissão
+                });
+            }
+            
+            // Outros tópicos importantes
+            else if (topic === 'hermes/asr/textCaptured') {
+                try {
+                    const data = JSON.parse(message.toString());
+                    console.log(`${self.name}: Texto capturado: "${data.text}"`);
+                    
+                    self.sendSocketNotification("MQTT_MESSAGE", {
+                        topic: topic,
+                        message: data
+                    });
+                } catch(e) {
+                    console.error(`${self.name}: Erro ao processar texto capturado:`, e);
+                }
+            }
+            
+            // Captura intenções (intents) - útil para interações
+            else if (topic.startsWith('hermes/intent/')) {
+                try {
+                    const data = JSON.parse(message.toString());
+                    console.log(`${self.name}: Intenção detectada: ${topic.split('/').pop()}`);
+                    
+                    self.sendSocketNotification("MQTT_INTENT", {
+                        topic: topic,
+                        intent: topic.split('/').pop(),
+                        data: data
+                    });
+                } catch(e) {
+                    console.error(`${self.name}: Erro ao processar intenção:`, e);
+                }
+            }
+            
+            // Medição de desempenho
+            const processingTime = Date.now() - startTime;
+            if (processingTime > 100) {
+                console.log(`${self.name}: Processamento de mensagem levou ${processingTime}ms (tópico: ${topic})`);
+            }
+        });
+    },
+
+    isDuplicateMessage: function(topic, message) {
+        try {
+            const payload = Buffer.isBuffer(message) ? message : Buffer.from(String(message));
+            const hash = crypto.createHash("sha256").update(payload).digest("hex");
+            const key = `${topic}:${hash}`;
+            const now = Date.now();
+            const last = this._msgDedup.get(key);
+            if (last && (now - last) < this._dedupWindowMs) {
+                return true;
+            }
+            this._msgDedup.set(key, now);
+            // limpeza simples
+            if (this._msgDedup.size > 200) {
+                for (const [k, v] of this._msgDedup.entries()) {
+                    if ((now - v) > this._dedupWindowMs) {
+                        this._msgDedup.delete(k);
+                    }
+                }
+            }
+        } catch (e) {
+            return false;
+        }
+        return false;
+    },
+
+    publishAll: function(topic, payload) {
+        if (!this.mqttClients || this.mqttClients.length === 0) {
+            console.error(`${this.name}: Tentativa de publicar sem clientes MQTT conectados`);
+            return;
+        }
+        this.mqttClients.forEach(client => {
+            if (client && client.connected) {
+                try {
+                    client.publish(topic, payload);
+                } catch (e) {
+                    console.error(`${this.name}: Erro ao publicar em ${topic}:`, e);
+                }
+            }
+        });
+        console.log(`${this.name}: Publicada mensagem no tópico ${topic}`);
+    },
+
+    startStateHeartbeat: function() {
+        if (!this.config || !this.config.publishState) return;
+        const siteId = (this.config.siteId || "").trim();
+        if (!siteId) return;
+        const intervalSeconds = parseInt(this.config.stateHeartbeatSeconds, 10) || 0;
+        if (intervalSeconds <= 0) return;
+        this.stopStateHeartbeat();
+        this.publishState("hb");
+        this.stateTimer = setInterval(() => {
+            this.publishState("hb");
+        }, intervalSeconds * 1000);
+    },
+
+    stopStateHeartbeat: function() {
+        if (this.stateTimer) {
+            clearInterval(this.stateTimer);
+            this.stateTimer = null;
+        }
+    },
+
+    publishState: function(detail) {
+        if (!this.mqttClients || this.mqttClients.length === 0) return;
+        const siteId = (this.config.siteId || "").trim();
+        if (!siteId) return;
+        const payload = {
+            v: 1,
+            type: "evt.state",
+            ts: new Date().toISOString(),
+            site_id: siteId,
+            session_id: null,
+            state: {
+                value: this.config.stateValue || "idle",
+                detail: detail || this.config.stateDetail || "hb"
+            }
+        };
+        if (this.config.stateUserId) {
+            payload.user_id = this.config.stateUserId;
+        }
+        const topic = `neoalice/v1/${siteId}/evt/state`;
+        try {
+            this.mqttClients.forEach(client => {
+                if (client && client.connected) {
+                    client.publish(topic, JSON.stringify(payload), { qos: 0, retain: false });
+                }
+            });
+        } catch (e) {
+            console.error(`${this.name}: Erro ao publicar evt/state:`, e);
+        }
+    },
+    
+    // Implementação opcional de TTS do lado do servidor
+    speakText: function(text, options = {}) {
+        // Pode integrar com serviços de TTS como Google, Amazon, etc.
+        console.log(`${this.name}: Solicitação para falar texto: "${text}"`);
+        
+        // Exemplo: publicar no tópico TTS do Hermes
+        if (this.mqttClient && this.mqttClient.connected) {
+            const message = {
+                text: text,
+                siteId: options.siteId || "default",
+                lang: options.lang || this.config.language || "pt-br"
+            };
+            
+            this.mqttClient.publish('hermes/tts/say', JSON.stringify(message));
+            console.log(`${this.name}: Mensagem TTS publicada no broker MQTT`);
+        } else {
+            console.error(`${this.name}: Cliente MQTT não está conectado para enviar TTS`);
+        }
+    },
+    
+    // Limpa quando o módulo é parado
+    stop: function() {
+        console.log(`${this.name}: Parando node_helper`);
+        this.stopStateHeartbeat();
+        
+        // Limpa arquivos temporários
+        if (fs.existsSync(this.tempDir)) {
+            try {
+                const files = fs.readdirSync(this.tempDir);
+                for (const file of files) {
+                    fs.unlinkSync(path.join(this.tempDir, file));
+                }
+                console.log(`${this.name}: Arquivos temporários removidos`);
+            } catch (e) {
+                console.error(`${this.name}: Erro ao limpar arquivos temporários:`, e);
+            }
+        }
+        
+        // Fecha conexão MQTT
+        if (this.mqttClients && this.mqttClients.length > 0) {
+            this.mqttClients.forEach(client => {
+                try {
+                    client.end();
+                } catch (e) {
+                    // ignora
+                }
+            });
+            this.mqttClients = [];
+            this.mqttClient = null;
+            console.log(`${this.name}: Conexões MQTT encerradas`);
+        }
+    }
+});

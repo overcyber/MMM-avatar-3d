@@ -1,0 +1,11 @@
+{
+  "name": "MMM-AvatarMQTT",
+  "version": "1.0.0",
+  "description": "Um módulo MagicMirror para exibir um avatar 3D que se comunica via MQTT",
+  "main": "MMM-AvatarMQTT.js",
+  "author": "Overcyber",
+  "license": "MIT",
+  "dependencies": {
+    "mqtt": "^5.3.5"
+  }
+}

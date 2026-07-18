@@ -1,8 +1,6 @@
 // AvatarController - Sistema Independente
 // Extrai logica do MMM-AvatarMQTT.js para funcionar sem MagicMirror
 
-import { TalkingHead } from 'talkinghead';
-
 export class AvatarController {
     constructor(config) {
         this.config = config;
@@ -23,11 +21,12 @@ export class AvatarController {
         // Inicializar AudioContext
         this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Import TalkingHead dinamicamente
-        const { default: TalkingHeadModule } = await import('talkinghead');
+        // MESMA logica do MMM-AvatarMQTT.js linha 115-134
+        const TalkingHeadModule = await import('talkinghead');
+        const TalkingHeadClass = TalkingHeadModule.TalkingHead;
 
         // Criar instancia TalkingHead (MESMA configuracao do MagicMirror)
-        this.head = new TalkingHeadModule(container, {
+        this.head = new TalkingHeadClass(container, {
             ttsEndpoint: '',
             lipsyncModules: ['pt-br', 'pt', 'en'],
             cameraView: this.config.cameraView || 'full'

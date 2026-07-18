@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar 3D - Sistema Independente</title>
+    <link rel="stylesheet" href="css/avatar.css">
+</head>
+<body>
+    <div id="avatar-container"></div>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div id="loading-text">Carregando avatar...</div>
+    </div>
+
+    <div id="debug">
+        <div class="debug-header">MQTT Debug</div>
+        <div id="debug-messages"></div>
+    </div>
+
+    <div id="status">
+        <div id="mqtt-status" class="status-item">
+            <span class="status-dot disconnected"></span>
+            <span id="mqtt-status-text">MQTT: Desconectado</span>
+        </div>
+        <div id="avatar-status" class="status-item">
+            <span class="status-dot disconnected"></span>
+            <span id="avatar-status-text">Avatar: Carregando...</span>
+        </div>
+    </div>
+
+    <!-- MQTT -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+    <!-- Import Map -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/",
+            "talkinghead": "http://localhost:8081/modules/talkinghead.mjs"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { AvatarController } from './js/avatar-controller.js';
+        import { MqttClient } from './js/mqtt-client.js';
+
+        // Configuracao
+        const CONFIG = {
+            brokerUrl: 'ws://192.168.10.14:1884',
+            clientId: 'VIEW_AVATAR_' + Math.random().toString(16).substr(2, 8),
+            siteId: 'view',
+            avatarURL: 'https://models.readyplayer.me/66d21fb928192d6953bf8712.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png',
+            cameraView: 'full',
+            language: 'pt-br',
+            debug: true
+        };
+
+        // Inicializar controladores
+        const avatarController = new AvatarController(CONFIG);
+        const mqttClient = new MqttClient(CONFIG, avatarController);
+
+        // Inicializar
+        async function init() {
+            try {
+                log('Iniciando sistema...');
+
+                // Inicializar avatar
+                await avatarController.init();
+                log('Avatar inicializado!');
+
+                // Inicializar MQTT
+                mqttClient.connect();
+
+            } catch (error) {
+                log('ERRO: ' + error);
+                console.error(error);
+            }
+        }
+
+        // Funcao de log
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const debugMessages = document.getElementById('debug-messages');
+            const entry = document.createElement('div');
+            entry.className = 'debug-entry';
+            entry.textContent = `[${timestamp}] ${message}`;
+            debugMessages.appendChild(entry);
+            debugMessages.scrollTop = debugMessages.scrollHeight;
+            console.log(message);
+        }
+
+        // Expor log globalmente
+        window.log = log;
+
+        // Iniciar
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+/* Estilos para o módulo MMM-AvatarMQTT */
+
+.mmm-avatarmqtt-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.avatar-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: transparent;
+}
+
+.loading-message {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 10;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+}
+
+.recognized-text {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 10px;
+    box-sizing: border-box;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    z-index: 10;
+    border-radius: 0px;
+    max-width: 100%;
+    word-wrap: break-word;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.debug-area {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    width: 300px;
+    max-height: 200px;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: #0f0;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    overflow-y: auto;
+    z-index: 20;
+    border-radius: 5px;
+}
+
+.mqtt-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    color: white;
+    z-index: 15;
+}
+
+.script-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 0, 0, 0.7);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    max-width: 80%;
+    text-align: center;
+    z-index: 100;
+}
+
+/* Estilos específicos para o MagicMirror */
+.module.MMM-AvatarMQTT {
+    width: 100%;
+    height: 100%;
+}
+
+/* Animações de fade que podem ser usadas pelo avatar */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.fadeIn {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.fadeOut {
+    animation: fadeOut 0.5s ease-in-out;
+}
+
+/* Cores mais compatíveis com o tema escuro do MagicMirror */
+.mmm-avatarmqtt-wrapper canvas {
+    background-color: transparent !important;
+}
+
+/* Responsividade para diferentes tamanhos de tela */
+@media (max-width: 768px) {
+    .recognized-text {
+        font-size: 16px;
+        padding: 8px;
+    }
+    
+    .debug-area {
+        width: 200px;
+        right: 10px;
+        font-size: 10px;
+    }
+}
+
+/* Estilo para quando o módulo está na posição lower_third */
+.region.lower_third .mmm-avatarmqtt-wrapper {
+    justify-content: flex-end;
+}
+
+/* Estilo para quando o módulo está em posições específicas */
+.region.top_center .mmm-avatarmqtt-wrapper .recognized-text,
+.region.bottom_center .mmm-avatarmqtt-wrapper .recognized-text {
+    text-align: center;
+}
+
+.region.top_left .mmm-avatarmqtt-wrapper .recognized-text,
+.region.bottom_left .mmm-avatarmqtt-wrapper .recognized-text {
+    text-align: left;
+}
+
+.region.top_right .mmm-avatarmqtt-wrapper .recognized-text,
+.region.bottom_right .mmm-avatarmqtt-wrapper .recognized-text {
+    text-align: right;
+}

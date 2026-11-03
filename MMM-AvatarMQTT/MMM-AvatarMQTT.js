@@ -441,6 +441,7 @@ Module.register("MMM-AvatarMQTT", {
                     'neoalice/v1/+/cmd/tts/stop',
                     'neoalice/v1/+/evt/stt/final',
                     self.config.moodTopic || 'neoalice/v1/+/evt/mood',
+                    'neoalice/v1/+/cmd/evt/mood',
                     // Novos topicos para controle do avatar
                     'neoalice/v1/+/cmd/avatar/gesture',
                     'neoalice/v1/+/cmd/avatar/emoji',

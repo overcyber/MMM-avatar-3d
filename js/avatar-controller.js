@@ -210,21 +210,36 @@ export class AvatarController {
     }
 
     mapMood(mood) {
-        // MESMO mapeamento do MagicMirror - MMM-AvatarMQTT.js linha 846-861
-        const normalized = (mood || '').toString().toLowerCase();
+        // MESMO mapeamento do MagicMirror - MMM-AvatarMQTT.js, funcao mapMood
+        const normalized = (mood || '').toString().trim().toLowerCase();
         const moodMap = {
+            // Estados do MoodProfile da NeoAlice e humores nativos do TalkingHead.
+            // Mesma tabela do servico alice-companion (overcyber/airi,
+            // services/alice-companion/src/mood-vocabulary.ts). Mudar nos dois lugares.
             'happy': 'happy',
             'playful': 'happy',
             'excited': 'happy',
+            'cozy': 'happy',
+            'mischief': 'happy',
+            'calm': 'neutral',
+            'neutral': 'neutral',
+            'reflective': 'neutral',
             'sad': 'sad',
+            'melancholic': 'sad',
             'annoyed': 'angry',
             'angry': 'angry',
+            'grouchy': 'angry',
             'tired': 'sleep',
             'sleep': 'sleep',
-            'calm': 'neutral',
-            'neutral': 'neutral'
+            'love': 'love',
+            'fear': 'fear',
+            'disgust': 'disgust'
         };
-        return moodMap[normalized] || 'neutral';
+        // hasOwnProperty evita que 'constructor' ou 'toString' virem humor.
+        if (Object.prototype.hasOwnProperty.call(moodMap, normalized)) {
+            return moodMap[normalized];
+        }
+        return 'neutral';
     }
 
     updateRecognizedText(text) {

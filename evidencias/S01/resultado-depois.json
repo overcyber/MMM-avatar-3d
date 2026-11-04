@@ -1,0 +1,113 @@
+{
+  "label": "depois",
+  "loadSeconds": "0.8",
+  "results": [
+    {
+      "sent": "happy",
+      "controller": "happy",
+      "applied": "happy"
+    },
+    {
+      "sent": "playful",
+      "controller": "happy",
+      "applied": "happy"
+    },
+    {
+      "sent": "excited",
+      "controller": "happy",
+      "applied": "happy"
+    },
+    {
+      "sent": "calm",
+      "controller": "neutral",
+      "applied": "neutral"
+    },
+    {
+      "sent": "neutral",
+      "controller": "neutral",
+      "applied": "neutral"
+    },
+    {
+      "sent": "reflective",
+      "controller": "neutral",
+      "applied": "neutral"
+    },
+    {
+      "sent": "cozy",
+      "controller": "happy",
+      "applied": "happy"
+    },
+    {
+      "sent": "tired",
+      "controller": "sleep",
+      "applied": "sleep"
+    },
+    {
+      "sent": "annoyed",
+      "controller": "angry",
+      "applied": "angry"
+    },
+    {
+      "sent": "angry",
+      "controller": "angry",
+      "applied": "angry"
+    },
+    {
+      "sent": "sad",
+      "controller": "sad",
+      "applied": "sad"
+    },
+    {
+      "sent": "melancholic",
+      "controller": "sad",
+      "applied": "sad"
+    },
+    {
+      "sent": "mischief",
+      "controller": "happy",
+      "applied": "happy"
+    },
+    {
+      "sent": "grouchy",
+      "controller": "angry",
+      "applied": "angry"
+    },
+    {
+      "sent": "sleep",
+      "controller": "sleep",
+      "applied": "sleep"
+    },
+    {
+      "sent": "love",
+      "controller": "love",
+      "applied": "love"
+    },
+    {
+      "sent": "fear",
+      "controller": "fear",
+      "applied": "fear"
+    },
+    {
+      "sent": "disgust",
+      "controller": "disgust",
+      "applied": "disgust"
+    },
+    {
+      "sent": " Love ",
+      "controller": "love",
+      "applied": "love"
+    },
+    {
+      "sent": "constructor",
+      "controller": "neutral",
+      "applied": "neutral"
+    }
+  ],
+  "gestureActive": true,
+  "animationActive": true,
+  "pageErrors": [
+    "TypeError: module[className] is not a constructor",
+    "TypeError: module[className] is not a constructor"
+  ],
+  "blocked": []
+}

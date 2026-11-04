@@ -1,5 +1,5 @@
 // Teste do mapeamento de humor NeoAlice -> TalkingHead.
-// Executar com: node --test tests/
+// Executar com: node --test tests/mood-map.test.mjs
 //
 // O mapMood existe em tres arquivos (modulo MagicMirror, copia de instalacao e pagina
 // independente). Este teste extrai a funcao de cada arquivo e confere que os tres

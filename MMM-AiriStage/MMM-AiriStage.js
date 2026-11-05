@@ -10,8 +10,9 @@
 
 Module.register("MMM-AiriStage", {
     defaults: {
-        // Endereco do build do AIRI servido na maquina do espelho.
-        url: "http://localhost:4173/",
+        // Pagina /mirror do AIRI: so o avatar, fundo transparente, sem chat (Plano 06, F3).
+        // Com o Docker do AIRI em outra maquina, use https://<ip>:4443/mirror e instale a CA local.
+        url: "http://localhost:4173/mirror",
         width: "100vw",
         height: "100vh",
         // Permissoes do iframe: audio sem clique e microfone para a fala do usuario.

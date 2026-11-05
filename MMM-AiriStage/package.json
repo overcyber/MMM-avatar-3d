@@ -1,0 +1,8 @@
+{
+  "name": "MMM-AiriStage",
+  "version": "1.0.0",
+  "description": "Modulo MagicMirror que mostra o palco do AIRI (fork overcyber/airi) num iframe",
+  "main": "MMM-AiriStage.js",
+  "author": "Overcyber",
+  "license": "MIT"
+}

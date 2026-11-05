@@ -15,8 +15,15 @@ Module.register("MMM-AvatarMQTT", {
         MQTT_BROKERS: 'mqtt://127.0.0.1:1883,mqtt://192.168.10.14:1883', // tenta múltiplos brokers (backend)
         MQTT_CLIENT_ID: "EVA_MQTT_" + Math.random().toString(16).substr(2, 8),
         OPENAI_API_KEY: "",     // Deixe vazio por padrão para segurança
-        avatarURL: 'https://models.readyplayer.me/66d21fb928192d6953bf8712.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png',
+        // Avatar e TalkingHead do servidor local (porta 8081). O Ready Player Me encerrou o servico,
+        // entao o endereco antigo de models.readyplayer.me nao serve mais como padrao.
+        avatarURL: 'http://localhost:8081/avatars/eva2.glb',
         talkingHeadBaseURL: "", // Se vazio, usa a origem do avatarURL
+        // Copia local do three.js 0.161.0, instalada por `npm install` na pasta do modulo.
+        // O MagicMirror serve a pasta do modulo em /modules/MMM-AvatarMQTT/.
+        threeBaseURL: "/modules/MMM-AvatarMQTT/node_modules/three",
+        // Se true, usa o CDN (jsDelivr) quando a copia local falha. Desligado para funcionar sem internet.
+        allowCdnFallback: false,
         language: "pt-br",
         debug: false,
         welcomeMessage: "Olá, estou pronta para processar áudio em português brasileiro",
@@ -43,9 +50,7 @@ Module.register("MMM-AvatarMQTT", {
     // Requisita scripts externos específicos
     getScripts: function() {
         return [
-            this.file('node_modules/mqtt/dist/mqtt.min.js'),
-            'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js',
-            'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js'
+            this.file('node_modules/mqtt/dist/mqtt.min.js')
         ];
     },
 
@@ -90,8 +95,31 @@ Module.register("MMM-AvatarMQTT", {
             return avatarOrigin + "/modules/talkinghead.mjs";
         } catch (error) {
             this.log("Nao foi possivel derivar a URL do TalkingHead a partir do avatarURL: " + error);
-            return "https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.2/modules/talkinghead.mjs";
+            return this.config.allowCdnFallback
+                ? "https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.2/modules/talkinghead.mjs"
+                : "http://localhost:8081/modules/talkinghead.mjs";
         }
+    },
+
+    // Monta o importmap do three.js e do TalkingHead.
+    // O talkinghead.mjs do servidor local importa o three.js direto de https://esm.sh/three@0.161.0.
+    // Estas entradas redirecionam esses enderecos para a copia local, entao o avatar carrega sem internet.
+    buildImportMap: function() {
+        const base = (this.config.threeBaseURL || "").trim().replace(/\/$/, "") || "/modules/MMM-AvatarMQTT/node_modules/three";
+        const module = base + "/build/three.module.js";
+        const addons = base + "/examples/jsm/";
+        return {
+            imports: {
+                "three": module,
+                "three/addons/": addons,
+                "https://esm.sh/three@0.161.0": module,
+                "https://esm.sh/three@0.161.0/build/three.module.js": module,
+                "https://esm.sh/three@0.161.0/examples/jsm/": addons,
+                "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js": module,
+                "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/": addons,
+                "talkinghead": this.talkingHeadModuleURL
+            }
+        };
     },
 
     // Carrega o módulo TalkingHead dinamicamente (ES module)
@@ -100,13 +128,7 @@ Module.register("MMM-AvatarMQTT", {
         // Adiciona o atributo type="importmap" para o suporte ES modules
         const importMap = document.createElement('script');
         importMap.type = 'importmap';
-        importMap.textContent = JSON.stringify({
-            imports: {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/",
-                "talkinghead": this.talkingHeadModuleURL
-            }
-        });
+        importMap.textContent = JSON.stringify(this.buildImportMap());
         document.head.appendChild(importMap);
         
         // Após adicionar o importmap, carrega o módulo TalkingHead usando Dynamic Import
@@ -128,8 +150,12 @@ Module.register("MMM-AvatarMQTT", {
                     self.scriptErrors.push("TalkingHead: " + error.message);
 
                     // Tenta uma abordagem alternativa com um script normal
-                    self.loadScriptFallback(self.talkingHeadModuleURL, true)
-                        .catch(() => self.loadScriptFallback("https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.2/modules/talkinghead.mjs", true));
+                    const fallback = self.loadScriptFallback(self.talkingHeadModuleURL, true);
+                    if (self.config.allowCdnFallback) {
+                        fallback.catch(() => self.loadScriptFallback("https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.2/modules/talkinghead.mjs", true));
+                    } else {
+                        fallback.catch(() => self.log("TalkingHead indisponivel no servidor local e o CDN esta desligado (allowCdnFallback: false)"));
+                    }
                 });
         }, 500);
     },

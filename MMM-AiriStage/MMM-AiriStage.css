@@ -1,0 +1,10 @@
+.airi-stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.airi-stage-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

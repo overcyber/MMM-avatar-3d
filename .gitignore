@@ -1,0 +1,18 @@
+# three.js 0.161.0 do modulo do espelho: so os arquivos que o TalkingHead usa ficam no git,
+# para o avatar carregar sem internet. `npm install` traz o pacote completo, que fica fora do git.
+**/node_modules/three/src/
+**/node_modules/three/build/*
+!**/node_modules/three/build/three.module.js
+**/node_modules/three/examples/**
+!**/node_modules/three/examples/**/
+!**/node_modules/three/examples/jsm/controls/OrbitControls.js
+!**/node_modules/three/examples/jsm/curves/NURBSCurve.js
+!**/node_modules/three/examples/jsm/curves/NURBSUtils.js
+!**/node_modules/three/examples/jsm/environments/RoomEnvironment.js
+!**/node_modules/three/examples/jsm/libs/fflate.module.js
+!**/node_modules/three/examples/jsm/libs/stats.module.js
+!**/node_modules/three/examples/jsm/loaders/DRACOLoader.js
+!**/node_modules/three/examples/jsm/loaders/FBXLoader.js
+!**/node_modules/three/examples/jsm/loaders/GLTFLoader.js
+!**/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
+**/node_modules/.bin/

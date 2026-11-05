@@ -6,6 +6,7 @@
   "author": "Overcyber",
   "license": "MIT",
   "dependencies": {
-    "mqtt": "^5.3.5"
+    "mqtt": "^5.3.5",
+    "three": "0.161.0"
   }
 }

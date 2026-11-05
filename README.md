@@ -155,6 +155,50 @@ A unica diferenca e que funciona sem MagicMirror, tornando-o ideal para:
 - Desenvolvimento Android (WebView)
 - Debugging
 
+## Funcionamento sem internet
+
+O modulo `MMM-AvatarMQTT` carrega o three.js 0.161.0 de uma copia local, em `MMM-AvatarMQTT/node_modules/three`.
+O importmap do modulo redireciona para essa copia os enderecos `esm.sh` e `cdn.jsdelivr.net` que o `talkinghead.mjs` do servidor TalkingHead usa.
+Os 11 arquivos que o TalkingHead usa ficam no git. O `npm install` traz o pacote completo.
+
+| Opcao | Padrao | Uso |
+| --- | --- | --- |
+| `threeBaseURL` | `/modules/MMM-AvatarMQTT/node_modules/three` | Onde esta a copia local do three.js |
+| `allowCdnFallback` | `false` | Usa o CDN do TalkingHead se o servidor local falhar. Precisa de internet. |
+| `avatarURL` | `http://localhost:8081/avatars/eva2.glb` | Avatar do servidor TalkingHead local |
+
+O Google TTS (`useGoogleTTS`) continua online. Sem internet, a NeoAlice precisa mandar o audio pronto em `cmd/tts/audio`, ou use `useGoogleTTS: false`.
+
+Teste sem internet (o navegador bloqueia tudo que nao seja 127.0.0.1):
+
+```bash
+node scripts/teste-offline-modulo.cjs <pasta do servidor TalkingHead> ./saida-offline
+```
+
+## Modulo MMM-AiriStage (avatar novo)
+
+`MMM-AiriStage/` mostra o palco do AIRI (fork `overcyber/airi`) num iframe. O AIRI roda como build offline
+(`VITE_AIRI_OFFLINE=true`) num servidor estatico da propria maquina, por padrao em `http://localhost:4173/`.
+A fala, o humor e os gestos chegam pela ponte NeoAlice do AIRI, que so le o MQTT.
+
+```javascript
+{
+    module: "MMM-AiriStage",
+    position: "fullscreen_below",
+    config: { url: "http://localhost:4173/" }
+}
+```
+
+Use um arquivo de configuracao separado para testar, e mantenha o `config.js` de producao como volta.
+A revisao completa esta no repositorio do AIRI: `docs/alice-motion-engine/REVISAO_MAGICMIRROR_E_OFFLINE.md`.
+
+Testes:
+
+```bash
+node --test tests/airi-stage.test.mjs
+AIRI_URL=http://127.0.0.1:4173/ node scripts/teste-offline-airi-stage.cjs ./saida-airi-stage
+```
+
 ## Troubleshooting
 
 **Avatar nao carrega:**
